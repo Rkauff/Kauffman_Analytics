@@ -1,0 +1,49 @@
+import os
+import tweepy
+import requests
+from io import BytesIO
+import boto3
+
+
+def lambda_handler(event, context):
+    api_key = os.environ['api_key']
+    api_secret = os.environ['api_secret']
+    bearer_token = os.environ['bearer_token']
+    access_token = os.environ['access_token']
+    access_secret_token = os.environ['access_secret_token']
+    aws_access_key_id = os.environ['aws_access_key_id']
+    aws_secret_access_key = os.environ['aws_secret_access_key']
+    
+    img_url = 'https://i0.wp.com/cutetropolis.com/wp-content/uploads/2019/09/fdt4e69gjkl31.jpg?fit=976%2C1200&ssl=1'
+    
+    response = requests.get(img_url)
+    
+    img = BytesIO(response.content)
+    
+    bucket_name = 'kauffmananalytics'
+    
+    s3 = boto3.client('s3', 
+        aws_access_key_id=aws_access_key_id, 
+        aws_secret_access_key=aws_secret_access_key)
+        
+    s3.upload_fileobj(img, bucket_name, "ryan.png")
+    
+    s3_resource = boto3.resource('s3', 
+        aws_access_key_id=aws_access_key_id, 
+        aws_secret_access_key=aws_secret_access_key)
+        
+    s3_resource.Bucket('kauffmananalytics').download_file('ryan.png', '/tmp/ryan.png')
+    
+    status = 'I love dogs!'
+    
+    
+    #Authenticating
+    auth = tweepy.OAuthHandler(api_key, api_secret)
+    auth.set_access_token(access_token, access_secret_token)
+    
+    #Create API object
+    api = tweepy.API(auth)
+    
+    #Create a tweet
+    #api.update_status("I love Lambda Functions!")
+    api.update_with_media('/tmp/ryan.png', status)
